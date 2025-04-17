@@ -13,6 +13,7 @@ class QuickLaTeX_Batch_Command
      */
     public function __invoke($args, $assoc_args)
     {
+        date_default_timezone_set('Europe/Belgrade');
         WP_CLI::log('Started job');
         $posts = get_posts([
             'post_type'      => 'post',
@@ -39,7 +40,6 @@ class QuickLaTeX_Batch_Command
             } else {
                 WP_CLI::log("— Post {$post_id} had no LaTeX.");
             }
-            date_default_timezone_set('Europe/Belgrade');
             WP_CLI::log(date('d-m-Y H:i:s'));
         }
 
