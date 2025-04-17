@@ -31,6 +31,25 @@ class QuickLaTeX_Batch_Command
             $new_content = quicklatex_parser($content);
             WP_CLI::log("Latex parsed");
 
+            $new_content = preg_replace_callback('/<img[^>]+>/', function ($matches) {
+                $img_tag = $matches[0];
+
+                // Skip if already has loading attr
+                if (strpos($img_tag, 'loading=') !== false) {
+                    return $img_tag;
+                }
+
+                // Apply lazy load ONLY if it includes 'ql-cache' in the src
+                if (preg_match('/src=[\"\']([^\"\']*ql-cache[^\"\']*)[\"\']/', $img_tag)) {
+                    WP_CLI::log("Lazy loading added");
+                    // Insert loading="lazy" into the tag
+                    return preg_replace('/<img/', '<img loading="lazy"', $img_tag, 1);
+                }
+
+                return $img_tag;
+            }, $new_content);
+
+
             if ($new_content !== $content) {
                 wp_update_post([
                     'ID'           => $post_id,
