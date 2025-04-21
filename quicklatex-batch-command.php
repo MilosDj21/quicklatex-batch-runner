@@ -49,6 +49,15 @@ class QuickLaTeX_Batch_Command
                 return $img_tag;
             }, $new_content);
 
+            if (preg_match('/<span class="ql-left-eqno"> &nbsp; <\/span>/', $new_content)) {
+                WP_CLI::log('left space span found, run replace');
+                $new_content = preg_replace('/<span class="ql-left-eqno"> &nbsp; <\/span>/', '', $new_content);
+            }
+
+            if (preg_match('/<span class="ql-right-eqno"> &nbsp; <\/span>/', $new_content)) {
+                WP_CLI::log('right space span found, run replace');
+                $new_content = preg_replace('/<span class="ql-right-eqno"> &nbsp; <\/span>/', '', $new_content);
+            }
 
             if ($new_content !== $content) {
                 wp_update_post([
