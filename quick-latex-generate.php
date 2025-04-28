@@ -1,10 +1,10 @@
 <?php
 
 /**
- * Plugin Name: QuickLatex Batch Runner
- * Description: Generate images with quick latex plugin and import them directly in posts
+ * Plugin Name: QuickLatex Lazy Loader
+ * Description: Add lazyload to quicklatex images before rendering
  * Author: MilosDj21
- * Version: 1.0
+ * Version: 1.0.1
  */
 
 defined('ABSPATH') or die("Cannot access pages directly.");
@@ -19,7 +19,12 @@ class QuickLatexBatch
         // 2) In case someone deactivates QuickLaTeX later, catch it on admin init:
         add_action('admin_init', array($this, 'myql_admin_check_quicklatex'));
 
-        add_action('plugins_loaded', array($this, 'batch_runner'));
+        // 3) Add filters for content to update post before rendering, quicklatex_parser priority is 7, so this is ran after that
+        add_filter('the_content', array($this, 'custom_parser'), 8);
+        add_filter('comment_text', array($this, 'custom_parser'), 8);
+        add_filter('the_title', array($this, 'custom_parser'), 8);
+        add_filter('the_excerpt', array($this, 'custom_parser'), 8);
+        add_filter('thesis_comment_text', array($this, 'custom_parser'), 8);
 
     }
 
@@ -52,13 +57,33 @@ class QuickLatexBatch
         }
     }
 
-    public function batch_runner()
+    public function custom_parser($content)
     {
-        // bail if QuickLaTeX isn’t active
-        if (defined('WP_CLI') && WP_CLI && function_exists('quicklatex_parser')) {
-            require_once __DIR__ . '/quicklatex-batch-command.php';
-            WP_CLI::add_command('quicklatex batch', 'QuickLaTeX_Batch_Command');
+        $content = preg_replace_callback('/<img[^>]+>/', function ($matches) {
+            $img_tag = $matches[0];
+
+            // Skip if already has loading attr
+            if (strpos($img_tag, 'loading=') !== false) {
+                return $img_tag;
+            }
+
+            // Apply lazy load ONLY if it includes 'ql-cache' in the src
+            if (preg_match('/src=[\"\']([^\"\']*ql-cache[^\"\']*)[\"\']/', $img_tag)) {
+                // Insert loading="lazy" into the tag
+                return preg_replace('/<img/', '<img loading="lazy"', $img_tag, 1);
+            }
+
+            return $img_tag;
+        }, $content);
+
+        if (preg_match('/<span class="ql-left-eqno"> &nbsp; <\/span>/', $content)) {
+            $content = preg_replace('/<span class="ql-left-eqno"> &nbsp; <\/span>/', '', $content);
         }
+
+        if (preg_match('/<span class="ql-right-eqno"> &nbsp; <\/span>/', $content)) {
+            $content = preg_replace('/<span class="ql-right-eqno"> &nbsp; <\/span>/', '', $content);
+        }
+        return $content;
     }
 }
 
