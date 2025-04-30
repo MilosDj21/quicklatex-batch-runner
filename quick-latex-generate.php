@@ -4,7 +4,7 @@
  * Plugin Name: QuickLatex Lazy Loader
  * Description: Add lazyload to quicklatex images before rendering
  * Author: MilosDj21
- * Version: 1.0.1
+ * Version: 1.0.2
  */
 
 defined('ABSPATH') or die("Cannot access pages directly.");
@@ -82,6 +82,10 @@ class QuickLatexBatch
 
         if (preg_match('/<span class="ql-right-eqno"> &nbsp; <\/span>/', $content)) {
             $content = preg_replace('/<span class="ql-right-eqno"> &nbsp; <\/span>/', '', $content);
+        }
+
+        if (preg_match('/<span class="ql-right-eqno"> \(\d+\) <\/span>/', $content)) {
+            $content = preg_replace('/<span class="ql-right-eqno"> \(\d+\) <\/span>/', '', $content);
         }
         return $content;
     }
